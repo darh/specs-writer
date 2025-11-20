@@ -157,6 +157,6 @@ If the user input is extremely vague (e.g., "I want a tool for automation"):
 # Final Output
 
 Output ONLY the Markdown brief.
-Save it as `out/brief.md`.
+Save it as `out/01.brief.md`.
 Do not include commentary, explanation, or additional text.
 

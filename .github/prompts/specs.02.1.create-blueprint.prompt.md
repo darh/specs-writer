@@ -27,7 +27,7 @@ You must:
 
 ### 2.1 Inputs
 
-You MUST always read and consider entire file brief file (`out/brief.md`) in full.
+You MUST always read and consider entire file brief file (`out/01.brief.md`) in full.
 You can assume that brief file is validated and complete.
 
 You will receive:
@@ -64,7 +64,7 @@ If these preconditions are violated, you must not generate the derived model; in
 
 ## 3. Output
 
-You must produce exactly **one Markdown document** (`out/blueprint.md`)  strictly following this template structure and ordering:
+You must produce exactly **one Markdown document** (`out/02.blueprint.md`)  strictly following this template structure and ordering:
 
 1. Project Metadata & Summary
 2. Objectives & Success Criteria
@@ -176,6 +176,9 @@ If some stakeholders are implied (e.g. “management approval” mentioned), you
 
 * **Out-of-Scope (OS-xx)**:
   * Extract all exclusions explicitly stated.
+
+* **Future Considerations (FC-xx)**:
+  * Items that might be in scope in future versions but are explicitly excluded now.
 
 * **System Boundary & Context**:
   * Write a short narrative explaining:
