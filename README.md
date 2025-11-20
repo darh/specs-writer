@@ -5,34 +5,34 @@ Set of prompts used by copilot agent & VSCode to create and validate outline, bl
 
 ## Overall Process
 
-### Outline Creation and Verification
+### Brief Creation and Verification
 
-Creates an outline markown file from a brief input, then verifies its completeness and correctness.
+Creates an brief markdown file from a brief input, then verifies its completeness and correctness.
 
-**Step 1.1: Create outline from the input:**
+**Step 1.1: Create brief from the user's input:**
 ```
-/specs-create my little app
-```
-
-**Step 1.2: Adjust out/outline.md and add details**
-
-Manual work by the user to refine and expand the outline as needed.
-
-
-**Step 1.3: Verify the outline is complete and correct**
-```
-/specs-verify-outline
+/specs-create a saas platform "FooBar" that allows users to trade their FooCoins for BarGems securely and efficiently.
 ```
 
-This is repeated until the outline is verified as complete and correct.
-See the generated out/outline.review.md for details.
+**Step 1.2: Adjust out/brief.md and add details**
+
+Manual work by the user to refine and expand the brief file as needed.
+
+
+**Step 1.3: Verify the brief is complete and correct**
+```
+/specs-verify-brief
+```
+
+This is repeated until the brief is verified as complete and correct.
+See the generated out/brief.summary.md & out/brief.validation.md for details.
 
 
 ### Blueprint Creation and Verification
 
-Creates a blueprint markdown file from the verified outline, then verifies its completeness and correctness.
+Creates a blueprint markdown file from the verified brief, then verifies its completeness and correctness.
 
-**Step 2.1: Create blueprint from the outline**
+`[NOT YET IMPLEMENTED]` **Step 2.1: Create blueprint from the brief**
 ```
 /specs-create-blueprint
 ```
