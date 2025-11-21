@@ -1,0 +1,118 @@
+#!/usr/bin/env sh
+set -eu
+
+usage() {
+  cat <<"USAGE"
+AsciiDoc CLI
+
+Commands:
+  adoc html  <INPUT> [--out DIR]    # export HTML
+  adoc pdf   <INPUT> [--out DIR]    # export PDF
+  adoc docx  <INPUT> [--out DIR]    # export DOCX (via pandoc)
+  adoc all   <INPUT> [--out DIR]    # export HTML+PDF+DOCX
+  adoc watch [html|pdf|docx|all] --src DIR --out DIR  # watch and re-export on change
+
+Notes:
+- <INPUT> can be a single .adoc/.asciidoc file or a directory (processes .adoc + .asciidoc)
+- Export metadata: set ADOC_REVNUMBER and ADOC_REVDATE (defaults to 1.0.0 and current UTC date)
+- DOCX template: set PANDOC_REFERENCE_DOCX to use a custom reference .docx
+USAGE
+}
+
+revdate() { date -u +%F; }
+
+adoc_common_attrs() {
+  printf -- "-a revnumber=%s -a revdate=%s" "${ADOC_REVNUMBER:-1.0.0}" "${ADOC_REVDATE:-$(revdate)}"
+}
+
+is_dir() { [ -d "$1" ]; }
+
+find_sources() {
+  base="$1"
+  # Print NUL-separated list of .adoc and .asciidoc files
+  find "$base" -type f \( -name "*.adoc" -o -name "*.asciidoc" \) -print0
+}
+
+run_html() {
+  in="$1"; out_dir="$2"
+  attrs="$(adoc_common_attrs)"
+  if [ -f "$in" ]; then
+    mkdir -p "$out_dir"
+    asciidoctor -r asciidoctor-diagram $attrs -D "$out_dir" "$in"
+  else
+    mkdir -p "$out_dir"
+    find_sources "$in" | xargs -0 -I{} asciidoctor -r asciidoctor-diagram $attrs -D "$out_dir" {}
+  fi
+}
+
+run_pdf() {
+  in="$1"; out_dir="$2"
+  attrs="$(adoc_common_attrs)"
+  if [ -f "$in" ]; then
+    mkdir -p "$out_dir"
+    asciidoctor-pdf -r asciidoctor-diagram $attrs -D "$out_dir" "$in"
+  else
+    mkdir -p "$out_dir"
+    find_sources "$in" | xargs -0 -I{} asciidoctor-pdf -r asciidoctor-diagram $attrs -D "$out_dir" {}
+  fi
+}
+
+watch_loop() {
+  what="$1"; src="$2"; out_dir="$3"
+  # initial build
+  case "$what" in
+    html) run_html "$src" "$out_dir";;
+    pdf) run_pdf "$src" "$out_dir";;
+    docx) run_docx "$src" "$out_dir";;
+    all) run_html "$src" "$out_dir"; run_pdf "$src" "$out_dir"; run_docx "$src" "$out_dir";;
+  esac
+  echo "[adoc] Watching $src -> $out_dir ($what)"
+  # Use entr to rebuild on changes, excluding output dir
+  while true; do
+    WHAT="$what" SRC="$src" OUTDIR="$out_dir" \
+    find "$src" -not -path "$out_dir/*" -type f \( -name "*.adoc" -o -name "*.asciidoc" \) | sort | uniq | \
+      entr -d sh -c 'echo "[adoc] Change detected at $(date -u +%FT%TZ)"; \
+        case "$WHAT" in \
+          html)  adoc html  "$SRC" --out "$OUTDIR" ;; \
+          pdf)   adoc pdf   "$SRC" --out "$OUTDIR" ;; \
+          docx)  adoc docx  "$SRC" --out "$OUTDIR" ;; \
+          all)   adoc all   "$SRC" --out "$OUTDIR" ;; \
+        esac'
+  done
+}
+
+main() {
+  [ "$#" -eq 0 ] && usage && exit 1
+  cmd="$1"; shift || true
+  case "$cmd" in
+    html|pdf|docx|all)
+      input="${1:-$ADOC_SRC}"; shift || true
+      out_dir="$ADOC_OUT"
+      if [ "${1:-}" = "--out" ]; then out_dir="$2"; shift 2; fi
+      [ -z "${out_dir:-}" ] && out_dir="$ADOC_OUT"
+      case "$cmd" in
+        html) run_html "$input" "$out_dir";;
+        pdf)  run_pdf  "$input" "$out_dir";;
+        docx) run_docx "$input" "$out_dir";;
+        all)  run_html "$input" "$out_dir"; run_pdf "$input" "$out_dir"; run_docx "$input" "$out_dir";;
+      esac
+      ;;
+    watch)
+      what="${1:-all}"; shift || true
+      [ "$what" = "--src" ] && what=all
+      src="$ADOC_SRC"; out_dir="$ADOC_OUT"
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          html|pdf|docx|all) what="$1";;
+          --src) shift; src="$1";;
+          --out) shift; out_dir="$1";;
+        esac; shift || true
+      done
+      watch_loop "$what" "$src" "$out_dir"
+      ;;
+    -h|--help|help) usage;;
+    *) echo "Unknown command: $cmd"; usage; exit 1;;
+  esac
+}
+
+main "$@"
